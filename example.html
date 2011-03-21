@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<style>
+body { height: 512px; background: #000000; margin: 0; }
+#map { height: 100%; width: 100%; }
+#version-example { color: #ffffff; }
+</style>
+
+<div id="map"></div>
+<p id="version-example">Maps API version: <span id="version"></span></p>
+
+<script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<script src="https://www.google.com/jsapi"></script>
+<script>google.load('earth', '1');</script>
+<script src="graticule.3.js"></script>
+<script src="earth_map_type.js"></script>
+
+<script>
+var GM = google.maps;
+
+window.onload = function () {
+  var windowHeight = window.innerHeight ? window.innerHeight :
+                       document.documentElement.clientHeight ?
+                         document.documentElement.clientHeight :
+                         document.body.clientHeight;
+ document.body.style.height = 
+   (windowHeight - document.getElementById('version-example').offsetHeight -
+   20) + 'px';
+
+ document.getElementById('version').appendChild(
+   document.createTextNode(GM.version));
+
+  window.map = new GM.Map(document.getElementById('map'), {
+    center: new GM.LatLng(32.86561, -117.25223),
+    mapTypeId: GM.MapTypeId.SATELLITE,
+    zoom: 16,
+    mapTypeControlOptions: {
+      style: GM.MapTypeControlStyle.DROPDOWN_MENU,
+      mapTypeIds: [
+        GM.MapTypeId.SATELLITE,
+        'Earth'
+      ]
+    }
+  });
+
+  window.earth = new EarthMapType(map);
+  GM.event.addListener(earth, 'initialized', function () {
+    if (window.earth) {
+      map.setMapTypeId('Earth');
+      window.earth.set('graticules', true);
+
+      var path = [
+        new GM.LatLng(32.86355, -117.25464),
+        new GM.LatLng(32.86604, -117.2542),
+        new GM.LatLng(32.86694, -117.2575),
+        new GM.LatLng(32.86716, -117.2574),
+        new GM.LatLng(32.86625, -117.2541),
+        new GM.LatLng(32.87175, -117.2530),
+        new GM.LatLng(32.87047, -117.2481),
+        new GM.LatLng(32.86427, -117.2478),
+      ];
+      path.push(path[0]);
+      var poly = new GM.Polygon({path: path});
+      poly.setMap(map);
+    }
+  });
+};
+</script>
