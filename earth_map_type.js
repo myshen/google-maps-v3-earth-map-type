@@ -811,7 +811,7 @@ var EarthMapType = (function () {
         ge.NAVIGATION_CONTROL_SMALL;
       ge.getNavigationControl().setVisibility(ge.VISIBILITY_AUTO);
       ge.getNavigationControl().setStreetViewEnabled(
-        map.get('streetViewControl') || map.get('streetViewControl') == null);
+        map.get('streetViewControl') !== false);
       var screenxy = ge.getNavigationControl().getScreenXY();
       screenxy.setXUnits(ge.UNITS_PIXELS);
       ge.getNavigationControl().setControlType(
@@ -827,6 +827,8 @@ var EarthMapType = (function () {
         }
       }
     }
+    map_state.zoomControl = map.get('zoomControl');
+    map.set('zoomControl', false);
 
     if (this.get('previousMapTypeId') == google.maps.MapTypeId.HYBRID ||
         this.get('previousMapTypeId') == google.maps.MapTypeId.ROADMAP ||
@@ -876,6 +878,7 @@ var EarthMapType = (function () {
     function afterTransition() {
       var map_state = self.get('map_state');
       map.set('scrollwheel', map_state.scrollwheel);
+      map.set('zoomControl', map_state.zoomControl);
       if (transition) {
         google.earth.removeEventListener(
           ge.getView(), 'viewchangeend', arguments.callee);
