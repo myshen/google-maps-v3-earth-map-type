@@ -763,13 +763,25 @@ var EarthMapType = (function () {
     }
 
     var shim = this.get('shim');
+    // XXX HACK attempt to find the map panes
     var possible = this.get('map').getDiv().firstChild.children;
     var shimmed = null;
     // XXX HACK attempt to find the div for the map menu.
-    for (var i = possible.length - 1; i >= 0; i -= 1) {
-      if (possible[i].className.indexOf('gmnoprint') > -1) {
-        shimmed = possible[i];
-        break;
+    for (var i = 0; i < possible.length; i += 1) {
+      var e = possible[i];
+      if (e.className.indexOf('gmnoprint') > -1) {
+        var children = e.children;
+        var found = false;
+        for (var j = 0; j < children.length; j += 1) {
+          if (children[j].title.indexOf('Change map style') > -1) {
+            found = true;
+            break;
+          }
+        }
+        if (found) {
+          shimmed = e;
+          break;
+        }
       }
     }
     if (shimmed) {
