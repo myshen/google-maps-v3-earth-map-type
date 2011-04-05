@@ -115,14 +115,6 @@ var EarthMapType = (function () {
       }
       return obj[this.id_name];
     };
-    // XXX HACK Hypothesize that marker is an API marker.
-    // Perhaps there is a way to find out when the Map is initializing and
-    // ignore setMaps during that time?
-    Linker.prototype.likelyNotUserMarker = function (obj) {
-      // This seems to be an API marker for street view or cursor
-      return obj instanceof google.maps.Marker && !obj.get('clickable') &&
-             obj.get('draggable') && !obj.get('raiseOnDrag');
-    };
     Linker.prototype.add = function (obj) {
       var k = this.getId(obj);
       if (!this.map[k]) {
@@ -212,9 +204,6 @@ var EarthMapType = (function () {
   MapToEarth.prototype = new google.maps.MVCObject();
   MapToEarth.prototype.insert = function (x) {
     var self = this;
-    if (this.get('linker').likelyNotUserMarker(x)) {
-      return;
-    }
 
     function doInsert(mapobj, placemark, listeners) {
       if (!placemark) {
