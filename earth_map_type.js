@@ -852,6 +852,8 @@ var EarthMapType = (function () {
     lookat.set(center.lat(), center.lng(), 0, ge.ALTITUDE_CLAMP_TO_GROUND,
                0, 0, this.mapper.zoomToRange(this.get('map').getZoom()));
     this._flyToAtSpeed(ge, lookat);
+    lookat.setTilt(30);
+    this._flyToAtSpeed(ge, lookat, 1);
   };
   EarthMapType.prototype.hide = function () {
     var ge = this.get('earth_plugin');
