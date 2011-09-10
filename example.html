@@ -42,9 +42,14 @@ window.onload = function () {
     }
   });
 
+  // Overlays added to the map before the map type is initialized should be
+  // added too
+  var m0 = new GM.Marker({position: new GM.LatLng(32.86355, -117.25464)});
+  m0.setMap(map);
+
   window.earth = new EarthMapType(map);
-  GM.event.addListener(earth, 'initialized', function (ok) {
-    if (ok) {
+  GM.event.addListener(earth, 'initialized', function (plugin_loaded) {
+    if (plugin_loaded) {
       map.setMapTypeId('Earth');
     }
     window.earth.set('graticules', true);

@@ -171,7 +171,7 @@ var EarthMapType = (function () {
         this.origin = origin;
       }, {prototype: true});
     // TODO Watch out. If you set the map as a property in the constructor some
-    // of the overlay mappers don't work yet. Set the map after constructing.
+    // of the overlay mappers don't work yet.
     google.maps.Marker.prototype.map_changed = wrapFn(
       google.maps.Marker.prototype.map_changed, linkMapChanges);
     google.maps.Polyline.prototype.map_changed = wrapFn(
@@ -185,6 +185,50 @@ var EarthMapType = (function () {
     google.maps.KmlLayer.prototype.map_changed = wrapFn(
       google.maps.KmlLayer.prototype.map_changed, linkMapChanges);
     // TODO other Overlays
+
+    // Locate overlays already added to the map and link them
+    function overlaysAlreadySetOnMap(map) {
+      function findMapLinker(map) {
+        // HACK guess that the first shared object between map and streetview
+        // object is the linker. API does not allow for a flow in which
+        // streetview returns nothing.
+        var streetview = map.getStreetView();
+        if (!streetview) {
+          return null;
+        }
+        for (var x in map) {
+          for (var y in streetview) {
+            if (map[x] === streetview[y]) {
+              return map[x];
+            }
+          }
+        }
+        return null;
+      }
+      var linker = findMapLinker(map);
+      if (linker) {
+        var map = null;
+        for (var x in linker) {
+          // HACK There's a good chance that the only object in the linker
+          // object is the map
+          if (typeof(linker[x]) == 'object') {
+            map = linker[x];
+          }
+        }
+        var presentObjects = [];
+        for (var x in map) {
+          if (!map[x].mapOnly) {
+            presentObjects.push(map[x]);
+          }
+        }
+        return presentObjects;
+      }
+      return [];
+    }
+    var pobjs = overlaysAlreadySetOnMap(earth.get('map'));
+    for (var i = 0; i < pobjs.length; i += 1) {
+      linkMapChanges.apply(pobjs[i]);
+    }
 
     function insert(x) {
       self.insert(x);
@@ -794,7 +838,7 @@ var EarthMapType = (function () {
         }
       }
     }
-    LOG(shimmed);
+    LOG('Shimmed', shimmed);
     if (shimmed) {
       shimmed.onmousedown = function () {
         setIframeShim(shim, shimmed);
