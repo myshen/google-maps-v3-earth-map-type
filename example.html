@@ -43,25 +43,24 @@ window.onload = function () {
   });
 
   window.earth = new EarthMapType(map);
-  GM.event.addListener(earth, 'initialized', function () {
-    if (window.earth) {
+  GM.event.addListener(earth, 'initialized', function (ok) {
+    if (ok) {
       map.setMapTypeId('Earth');
-      window.earth.set('graticules', true);
-
-      var path = [
-        new GM.LatLng(32.86355, -117.25464),
-        new GM.LatLng(32.86604, -117.2542),
-        new GM.LatLng(32.86694, -117.2575),
-        new GM.LatLng(32.86716, -117.2574),
-        new GM.LatLng(32.86625, -117.2541),
-        new GM.LatLng(32.87175, -117.2530),
-        new GM.LatLng(32.87047, -117.2481),
-        new GM.LatLng(32.86427, -117.2478),
-      ];
-      path.push(path[0]);
-      var poly = new GM.Polygon({path: path});
-      poly.setMap(map);
     }
+    window.earth.set('graticules', true);
+    var path = [
+      new GM.LatLng(32.86355, -117.25464),
+      new GM.LatLng(32.86604, -117.2542),
+      new GM.LatLng(32.86694, -117.2575),
+      new GM.LatLng(32.86716, -117.2574),
+      new GM.LatLng(32.86625, -117.2541),
+      new GM.LatLng(32.87175, -117.2530),
+      new GM.LatLng(32.87047, -117.2481),
+      new GM.LatLng(32.86427, -117.2478),
+    ];
+    path.push(path[0]);
+    var poly = new GM.Polygon({path: path});
+    poly.setMap(map);
   });
 };
 </script>

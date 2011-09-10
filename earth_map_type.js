@@ -13,10 +13,12 @@
 // Events
 // ======
 //
-// initialized | None | This event is fired when the earth container and plugin
-//                      is loaded and linked to the given map. Wait for this if
-//                      you want to do anything with the earth
-//                      plugin/graticules.
+// initialized | Boolean | This event is fired when the earth container and 
+//                         plugin is loaded and linked to the given map. Wait
+//                         for this if you want to do anything with the earth
+//                         plugin/graticules. It will be called with true or
+//                         false depending on whether the map type can be used
+//                         or not.
 //
 // Usage
 // =====
@@ -441,10 +443,11 @@ var EarthMapType = (function () {
     placemark.setStyleSelector(line_style);
 
     addMVCFollower(listeners, polyline, 'style_changed', function () {
-      var pstyle = polyline.get('style');
+      var pstyle = polyline.get('style') || {};
       line_style.getLineStyle().setWidth(pstyle.strokeWeight || 2);
-      line_style.getLineStyle().getColor().set(self.hexColorAndAlphaToEarthColor(
-        pstyle.strokeColor || '000000', pstyle.strokeOpacity || 1));
+      line_style.getLineStyle().getColor().set(
+        self.hexColorAndAlphaToEarthColor(
+          pstyle.strokeColor || '000000', pstyle.strokeOpacity || 1));
     });
 
     doInsert(polyline, placemark, listeners);
@@ -465,11 +468,13 @@ var EarthMapType = (function () {
     placemark.setStyleSelector(poly_style);
 
     addMVCFollower(listeners, polygon, 'style_changed', function () {
-      var pstyle = polygon.get('style');
-      poly_style.getLineStyle().getColor().set(self.hexColorAndAlphaToEarthColor(
-        pstyle.strokeColor || '000000', pstyle.strokeOpacity || 1));
-      poly_style.getPolyStyle().getColor().set(self.hexColorAndAlphaToEarthColor(
-        pstyle.fillColor || '000000', pstyle.fillOpacity || 0.5));
+      var pstyle = polygon.get('style') || {};
+      poly_style.getLineStyle().getColor().set(
+        self.hexColorAndAlphaToEarthColor(
+          pstyle.strokeColor || '000000', pstyle.strokeOpacity || 1));
+      poly_style.getPolyStyle().getColor().set(
+        self.hexColorAndAlphaToEarthColor(
+          pstyle.fillColor || '000000', pstyle.fillOpacity || 0.5));
     });
 
     doInsert(polygon, placemark, listeners);
@@ -622,15 +627,8 @@ var EarthMapType = (function () {
     google.maps.event.addListener(this, 'graticules_changed', function () {
       if (self.get('graticules')) {
         ge.getOptions().setGridVisibility(true);
-        if (self.get('overlay_graticules')) {
-          self.get('overlay_graticules').show();
-          self.get('overlay_graticules').draw();
-        }
       } else {
         ge.getOptions().setGridVisibility(false);
-        if (self.get('overlay_graticules')) {
-          self.get('overlay_graticules').hide();
-        }
       }
     });
 
@@ -671,7 +669,7 @@ var EarthMapType = (function () {
       }
     });
     this.jumpToCenter(ge);
-    google.maps.event.trigger(this, 'initialized');
+    google.maps.event.trigger(this, 'initialized', true);
   };
   EarthMapType.prototype.getDiv = function () {
     var map = this._map || this.get('map');
@@ -710,6 +708,7 @@ var EarthMapType = (function () {
     earthDiv.id = 'CONTAINER_EARTH';
     earthDiv.style.width = "100%";
     earthDiv.style.height = "100%";
+    earthDiv.style.visibility = "hidden";
     this.getDiv().appendChild(earthDiv);
     this.set('container_earth', earthDiv);
 
@@ -718,11 +717,31 @@ var EarthMapType = (function () {
     shim.style.zIndex = 1000;
     this.set('shim', shim);
 
+    google.maps.event.addListener(this, 'graticules_changed', function () {
+      if (self.get('graticules')) {
+        if (self.get('overlay_graticules')) {
+          self.get('overlay_graticules').show();
+          self.get('overlay_graticules').draw();
+        }
+      } else {
+        if (self.get('overlay_graticules')) {
+          self.get('overlay_graticules').hide();
+        }
+      }
+    });
+
     if (google.earth) {
       google.earth.createInstance(earthDiv, function (ge) {
-        self._initEarth(ge);
+        try {
+          self._initEarth(ge);
+        } catch (e) {
+          LOG("Unable to initEarth");
+          google.maps.event.trigger(self, 'initialized', false);
+          throw e;
+        }
       }, function (errorCode) {
         LOG('Unable to initialize Google Earth plugin:', errorCode);
+        google.maps.event.trigger(self, 'initialized', false);
       });
     } else {
       LOG('Why did you include this library?');
@@ -748,6 +767,8 @@ var EarthMapType = (function () {
     var map = this.get('map');
 
     if (!ge) {
+      this.get('container_earth').style.visibility = 'inherit';
+      this.set('showing', true);
       return;
     }
 
@@ -773,6 +794,7 @@ var EarthMapType = (function () {
         }
       }
     }
+    LOG(shimmed);
     if (shimmed) {
       shimmed.onmousedown = function () {
         setIframeShim(shim, shimmed);
@@ -848,6 +870,8 @@ var EarthMapType = (function () {
     var ge = this.get('earth_plugin');
 
     if (!ge) {
+      this.get('container_earth').style.visibility = 'hidden';
+      this.set('showing', false);
       return;
     }
 
